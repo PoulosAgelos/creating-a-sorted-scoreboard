@@ -1,0 +1,171 @@
+#!/bin/bash
+for programm in "$@"; 
+do
+NumberLines=$(sed -n '=' $programm | wc -l)
+    exec < "$programm"
+    Names=($(cut -d':' -f1))   
+    #echo "$NumberLines"              
+    #echo "X = ${Names[@]}"                    
+    exec < "$programm" 
+    Results=($(cut -d':' -f2))
+    #echo "Y = ${Y[@]}"
+    
+    Names1=()
+    Names2=()
+    Results1=()
+    Results2=()
+    for (( i=0; i <= ($NumberLines-1); i++ )) #separate the file
+     do
+      str=${Names[i]}
+      str2=${Results[i]}
+
+ 
+      IFS='-' # hyphen (-) is set as delimiter
+      read -ra ADDR <<< "$str" # str is read into an array as tokens separated by IFS
+      read -ra ADDR2 <<< "$str2"
+      #echo " $ADDR"
+      Names1[i]=$ADDR
+      Names2[i]=${ADDR[1]}
+      Results1[i]=$ADDR2
+      Results2[i]=${ADDR2[1]}
+    done
+    #echo "${Names1[@]} // ${Names2[@]} || "
+    #echo "${Results1[@]} // ${Results2[@]} || "
+    omades=()
+    vathmoi=()
+    goal=()
+    laog=()
+    counter=0       
+    counter2=0
+    found=-1
+    found2=-1
+    for (( i=0; i <= ($NumberLines-1); i++ ))  #just create the list with the teams
+      do
+     
+        for elem in ${omades[@]}      #elegxos ean yparxoun idies omades mesa sthn lista hdh
+           do  
+             #echo "$elem"
+             if [ "${Names1[$i]}" = "$elem" ]; then
+                found=$counter2
+                
+            elif [ "${Names2[$i]}" == "$elem" ]; then
+                found2=$counter2
+            fi
+            let "counter2=counter2 + 1" 
+            #echo "$counter2"
+        done
+      #echo "$found"
+
+
+      if [ "$found" -le  -1 ]; then                  
+          omades[$counter]=${Names1[$i]}
+          goal[$counter]=${Results1[$i]}
+          laog[$counter]=${Results2[$i]}
+
+          if [ "${Results1[$i]}" -gt "${Results2[$i]}" ]; then
+              vathmoi[$counter]=3
+          elif [ "${Results1[$i]}" -eq "${Results2[$i]}" ]; then
+              vathmoi[$counter]=1
+          else
+              vathmoi[$counter]=0
+          fi
+
+          let "counter=counter + 1" 
+          #echo " ${Names1[$i]} "
+          
+      else 
+          let "goal[$found] = goal[$found] + ${Results1[$i]}"
+          let "laog[$found] = laog[$found] + ${Results2[$i]}"
+
+          if [ "${Results1[$i]}" -gt "${Results2[$i]}" ]; then
+              let "vathmoi[$found]=vathmoi[$found] + 3 "
+          elif [ "${Results1[$i]}" -eq "${Results2[$i]}" ]; then
+              let "vathmoi[$found]=vathmoi[$found] + 1 "   
+          fi
+          found=-1
+      fi
+
+      if [ "$found2" -eq  -1 ]; then
+          omades[$counter]=${Names2[$i]}
+          goal[$counter]=${Results2[$i]}
+          laog[$counter]=${Results1[$i]}
+
+          if [ "${Results1[$i]}" -lt "${Results2[$i]}" ]; then
+             vathmoi[$counter]=3
+          elif [ "${Results1[$i]}" -eq "${Results2[$i]}" ]; then
+            vathmoi[$counter]=1
+          else 
+              vathmoi[$counter]=0
+          fi
+          
+        let "counter=counter + 1" 
+        
+      else 
+        let "goal[$found2] = goal[$found2] + ${Results2[$i]}"
+        let "laog[$found2] = laog[$found2] + ${Results1[$i]}"
+
+        if [ "${Results1[$i]}" -lt "${Results2[$i]}" ]; then
+              let "vathmoi[$found2]=vathmoi[$found2] + 3 "
+          elif [ "${Results1[$i]}" -eq "${Results2[$i]}" ]; then
+              let "vathmoi[$found2]=vathmoi[$found2] + 1 "   
+          fi
+
+        found2=-1
+      fi
+      counter2=0
+    done
+    echo "${omades[@]} || ${vathmoi[@]} || ${goal[@]} || ${laog[@]} || ${#vathmoi[@]}" 
+    temp=0 
+
+
+    for((i=${#vathmoi[@]}-1;i>=0; i--)); do       #sortarisma me vathmous
+        for((j=1;j<=$i; j++)); do
+            if [[ ${vathmoi[j-1]} -lt ${vathmoi[j]} ]]; then
+                temp="${vathmoi[j-1]}"
+                vathmoi[j-1]="${vathmoi[j]}"
+                vathmoi[j]="$temp"
+                temp="${omades[j-1]}"
+                omades[j-1]="${omades[j]}"
+                omades[j]="$temp"
+                temp="${goal[j-1]}"
+                goal[j-1]="${goal[j]}"
+                goal[j]="$temp"
+                temp="${laog[j-1]}"
+                laog[j-1]="${laog[j]}"
+                laog[j]="$temp"
+            fi
+        done
+    done
+
+    for((i=${#vathmoi[@]}-1;i>=0; i--)); do       #sortarisma me onoma
+        for((j=1;j<=$i; j++)); do
+            if [[ ${vathmoi[j-1]} -eq ${vathmoi[j]} ]]; then
+                if [[ ${omades[j-1]} > ${omades[j]} ]]; then
+                  temp="${vathmoi[j-1]}"
+                  vathmoi[j-1]="${vathmoi[j]}"
+                  vathmoi[j]="$temp"
+                  temp="${omades[j-1]}"
+                  omades[j-1]="${omades[j]}"
+                  omades[j]="$temp"
+                  temp="${goal[j-1]}"
+                  goal[j-1]="${goal[j]}"
+                  goal[j]="$temp"
+                  temp="${laog[j-1]}"
+                  laog[j-1]="${laog[j]}"
+                  laog[j]="$temp"
+                fi
+            fi    
+        done
+    done
+
+    #echo "${omades[@]} || ${vathmoi[@]} || ${goal[@]} || ${laog[@]}" 
+    #echo "Omades" $'\x1d'     "Vathmoi" $'\x1d' "goal-goalreverse"
+    for((i=0;i<${#omades[@]};i++))
+    do   
+         if [ $i -eq 0 ]; then
+         echo "Omades" $'\x1d'     "Vathmoi" $'\x1d' "goal-goalreverse"
+         fi
+         echo ${omades[$i]} $'\x1d' ${vathmoi[$i]} $'\x1d' ${goal[$i]}-${laog[i]}
+    done | column -t -s$'\x1d'
+
+done
